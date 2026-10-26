@@ -1,0 +1,40 @@
+{
+  "manifest_version": 3,
+  "name": "Auditor de dataLayer y analizador de GA4",
+  "version": "1.1.0",
+  "description": "Captura en tiempo real eventos del dataLayer, permite subir archivos JSON y auditar parámetros de GA4 según las etiquetas de GTM.",
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  "permissions": [
+    "storage",
+    "activeTab"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Auditor de dataLayer y analizador de GA4",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["injected.js"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}

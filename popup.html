@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Auditor de dataLayer y analizador de GA4</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="brand">
+        <div class="logo-icon">📊</div>
+        <div>
+          <h1>Auditor de dataLayer y GA4</h1>
+          <span class="subtitle" id="gtmBadgeSubtitle">Reglas de GTM: GTM-NK9G27ZB (tarifasfibramovil.es)</span>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button id="openAnalyzerTabBtn" class="btn btn-secondary" title="Abrir en pestaña completa para analizar archivos grandes cómodamente">
+          <span>↗ Pestaña</span>
+        </button>
+        <button id="toggleRecordBtn" class="btn btn-icon btn-record" title="Pausar/reanudar grabación">
+          <span id="recordIcon">⏺</span>
+          <span id="recordStatusText">Grabando</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <div class="nav-tabs">
+      <button type="button" class="nav-tab active" id="tabLiveBtn">
+        <span>📡 Eventos / captura</span>
+      </button>
+      <button type="button" class="nav-tab" id="tabAuditBtn">
+        <span>🔍 Analizador de GA4 (GTM)</span>
+        <span id="auditErrorCounterBadge" class="tab-badge hidden">0</span>
+      </button>
+    </div>
+
+    <!-- VIEW 1: LIVE / LOADED EVENTS -->
+    <div id="viewLiveContainer" class="view-panel">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="filter-row">
+          <div class="multiselect-wrapper" id="multiselectWrapper">
+            <button type="button" id="multiselectTrigger" class="multiselect-btn">
+              <span id="multiselectLabel">Todos los eventos ("event: *")</span>
+              <span class="multiselect-arrow">▾</span>
+            </button>
+            <div id="multiselectDropdown" class="multiselect-dropdown hidden">
+              <div class="multiselect-actions">
+                <button type="button" id="selectAllEventsBtn" class="link-btn">Todos</button>
+                <button type="button" id="deselectAllEventsBtn" class="link-btn">Ninguno</button>
+                <button type="button" id="selectOnlyGtmEventsBtn" class="link-btn" title="Seleccionar únicamente los eventos configurados en el contenedor GTM">Solo GTM</button>
+                <button type="button" id="excludeGtmEventsBtn" class="link-btn" title="Deseleccionar eventos automáticos gtm.*">Ocultar gtm.*</button>
+              </div>
+              <div id="multiselectList" class="multiselect-list">
+                <!-- Dynamically populated with checkboxes -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-box">
+          <input type="text" id="searchInput" placeholder="Buscar texto/valor en payload (ej: Whatsapp, EUR)...">
+        </div>
+
+        <div class="filter-options">
+          <label class="checkbox-label" title="Mostrar únicamente los eventos definidos en las etiquetas del contenedor GTM">
+            <input type="checkbox" id="onlyGtmEventsCheck">
+            <span>🏷️ Solo eventos GTM</span>
+          </label>
+          <label class="checkbox-label" title="Mostrar solo los pushes que tienen la propiedad 'event'">
+            <input type="checkbox" id="onlyExplicitEventCheck">
+            <span>Solo con <code>event</code></span>
+          </label>
+          <label class="checkbox-label" title="Mostrar únicamente eventos que contengan teléfono, email o DNI">
+            <input type="checkbox" id="onlyPiiCheck">
+            <span>⚠️ Solo PII</span>
+          </label>
+          <label class="checkbox-label" title="Mostrar únicamente eventos GA4 que tienen errores o parámetros faltantes según GTM">
+            <input type="checkbox" id="onlyGa4ErrorsCheck">
+            <span>❌ Solo errores GA4</span>
+          </label>
+        </div>
+
+        <div class="action-buttons">
+          <input type="file" id="importEventsInput" accept=".json" class="hidden">
+          <button id="importEventsBtn" class="btn btn-primary" title="Subir un JSON de eventos para analizarlo">
+            <span>📂 Subir JSON de eventos</span>
+          </button>
+          <button id="exportJsonBtn" class="btn btn-secondary" title="Descargar eventos visibles como JSON">
+            <span>📥 JSON</span>
+          </button>
+          <button id="exportCsvBtn" class="btn btn-secondary" title="Descargar eventos visibles como CSV">
+            <span>📊 CSV</span>
+          </button>
+          <button id="clearBtn" class="btn btn-danger" title="Limpiar todos los eventos registrados">
+            <span>🗑 Limpiar</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <span>Eventos: <strong id="totalCount">0</strong></span>
+        <span id="filterCountWrapper" class="hidden">Mostrando: <strong id="filteredCount">0</strong></span>
+        <span id="sourceIndicator" class="source-indicator">En vivo</span>
+        <span class="auto-scroll-toggle">
+          <label><input type="checkbox" id="autoScrollCheck" checked> Desplazamiento automático</label>
+        </span>
+      </div>
+
+      <!-- Events List -->
+      <main class="events-container" id="eventsContainer">
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">🔍</div>
+          <p>No se han registrado eventos todavía.</p>
+          <small>Navega por la web para capturar en vivo o pulsa <strong>«📂 Subir JSON de eventos»</strong> para auditar un archivo.</small>
+        </div>
+      </main>
+    </div>
+
+    <!-- VIEW 2: GA4 / GTM AUDITOR -->
+    <div id="viewAuditContainer" class="view-panel hidden">
+      <div class="audit-toolbar">
+        <div class="audit-files-row">
+          <div class="audit-file-group">
+            <span class="audit-file-label">Eventos a auditar:</span>
+            <button id="auditUploadEventsBtn" class="btn btn-primary">📂 Subir JSON de eventos</button>
+            <button id="auditUseLiveBtn" class="btn btn-secondary hidden" title="Volver a analizar los eventos capturados en vivo">📡 Usar captura en vivo</button>
+          </div>
+          <div class="audit-file-group">
+            <span class="audit-file-label">Contenedor de GTM:</span>
+            <input type="file" id="importGtmInput" accept=".json" class="hidden">
+            <button id="importGtmBtn" class="btn btn-secondary" title="Subir otro JSON exportado de Google Tag Manager">⚙️ Cambiar GTM (.json)</button>
+            <button id="resetGtmBtn" class="btn btn-secondary hidden" title="Restaurar GTM-NK9G27ZB por defecto">↺ Por defecto</button>
+          </div>
+        </div>
+
+        <!-- Summary KPI Cards -->
+        <div class="audit-kpis">
+          <div class="kpi-card">
+            <span class="kpi-val" id="kpiTotalGa4">0</span>
+            <span class="kpi-lbl">Eventos de GA4</span>
+          </div>
+          <div class="kpi-card kpi-ok">
+            <span class="kpi-val" id="kpiOkCount">0</span>
+            <span class="kpi-lbl">✅ Correctos</span>
+          </div>
+          <div class="kpi-card kpi-warn">
+            <span class="kpi-val" id="kpiWarnCount">0</span>
+            <span class="kpi-lbl">⚠️ Avisos</span>
+          </div>
+          <div class="kpi-card kpi-err">
+            <span class="kpi-val" id="kpiErrCount">0</span>
+            <span class="kpi-lbl">❌ Con errores</span>
+          </div>
+        </div>
+
+        <div class="audit-filter-bar">
+          <select id="auditStatusFilter" class="audit-select">
+            <option value="ALL_GA4">Todos los eventos de GA4</option>
+            <option value="PROBLEMS">Solo con errores o avisos (❌ / ⚠️)</option>
+            <option value="ERROR">Solo con errores (❌)</option>
+            <option value="OK">Solo correctos (✅)</option>
+            <option value="UNTRACKED">Eventos sin etiqueta de GA4 en GTM</option>
+          </select>
+          <select id="auditTypeFilter" class="audit-select">
+            <option value="ALL">Todos los tipos de evento</option>
+          </select>
+          <label class="checkbox-label" title="Agrupa y deduplica el mismo error si ocurre varias veces en la misma URL o en distintas URL, dejando constancia de las URL afectadas">
+            <input type="checkbox" id="auditDeduplicateCheck" checked>
+            <span>🔁 Deduplicar errores</span>
+          </label>
+          <button id="exportAuditHtmlBtn" class="btn btn-primary" title="Descargar un informe visual e interactivo en HTML listo para compartir o imprimir en PDF">
+            📄 Informe visual (HTML)
+          </button>
+          <button id="exportAuditCsvBtn" class="btn btn-secondary" title="Descargar informe del análisis en CSV">
+            📊 CSV
+          </button>
+          <button id="exportAuditReportBtn" class="btn btn-secondary" title="Descargar informe completo de auditoría en JSON">
+            📥 JSON
+          </button>
+        </div>
+      </div>
+
+      <div class="audit-content" id="auditContentContainer">
+        <!-- Populated dynamically by popup.js -->
+      </div>
+    </div>
+  </div>
+
+  <script src="gtm_validator.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
