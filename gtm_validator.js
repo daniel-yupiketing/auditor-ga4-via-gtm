@@ -238,10 +238,15 @@ const REQUIRED_ITEM_FIELDS = [
   "item_id",
   "item_name",
   "price",
-  "item_brand",
-  "item_category",
-  "quantity"
+  "quantity",
+  "currency"
 ];
+
+const WARNING_ITEM_FIELDS = new Set([
+  "price",
+  "quantity",
+  "currency"
+]);
 
 const IGNORED_SYSTEM_EVENTS = new Set([
   "gtm.js",
@@ -469,7 +474,7 @@ function validateItemsArray(items) {
     }
 
     REQUIRED_ITEM_FIELDS.forEach((reqField) => {
-      const isOptionalWarn = ["item_brand", "item_category", "quantity"].includes(reqField);
+      const isOptionalWarn = WARNING_ITEM_FIELDS.has(reqField);
       if (!(reqField in item)) {
         issues.push({
           severity: isOptionalWarn ? "warning" : "error",
@@ -489,7 +494,7 @@ function validateItemsArray(items) {
           const num = Number(val.replace(",", "."));
           if (Number.isNaN(num)) {
             issues.push({
-              severity: "error",
+              severity: "warning",
               field: `eventModel.items[${idx}].price`,
               message: `'price' en items[${idx}] no es un número válido ('${val}').`
             });
