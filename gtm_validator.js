@@ -1,10 +1,10 @@
 // gtm_validator.js - Motor de validación de eventos GA4 según contenedor GTM
-// Incluye las reglas extraídas de GTM-NK9G27ZB_workspace2.json por defecto y permite cargar cualquier JSON de GTM.
+// Incluye las reglas del contenedor de referencia por defecto y permite cargar cualquier JSON de GTM.
 
 const DEFAULT_GTM_SPEC = {
-  containerName: "tarifasfibramovil.es",
-  publicId: "GTM-NK9G27ZB",
-  exportTime: "2026-10-26 05:09:12",
+  containerName: "Contenedor de referencia",
+  publicId: "GTM-XXXXXXX",
+  exportTime: "",
   eventRules: {
     "services": {
       eventName: "services",
