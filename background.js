@@ -3,17 +3,30 @@
 const STORAGE_KEY = 'dla_events';
 const SETTINGS_KEY = 'dla_settings';
 
+// Sequential promise queue to prevent race conditions when multiple events
+// are pushed in the same millisecond (e.g. view_item_list batches on llamaya.com)
+let storageQueue = Promise.resolve();
+
+function enqueueStorageTask(taskFn) {
+  storageQueue = storageQueue.then(taskFn).catch((err) => {
+    console.error('[DataLayer Auditor Background] Queue error:', err);
+  });
+  return storageQueue;
+}
+
 // Initialize default storage if empty
-chrome.runtime.onInstalled.addListener(async () => {
-  const data = await chrome.storage.local.get([STORAGE_KEY, SETTINGS_KEY]);
-  const events = Array.isArray(data[STORAGE_KEY]) ? data[STORAGE_KEY] : [];
-  if (!data[STORAGE_KEY]) {
-    await chrome.storage.local.set({ [STORAGE_KEY]: [] });
-  }
-  if (!data[SETTINGS_KEY]) {
-    await chrome.storage.local.set({ [SETTINGS_KEY]: { recording: true } });
-  }
-  updateBadge(events.length);
+chrome.runtime.onInstalled.addListener(() => {
+  enqueueStorageTask(async () => {
+    const data = await chrome.storage.local.get([STORAGE_KEY, SETTINGS_KEY]);
+    const events = Array.isArray(data[STORAGE_KEY]) ? data[STORAGE_KEY] : [];
+    if (!data[STORAGE_KEY]) {
+      await chrome.storage.local.set({ [STORAGE_KEY]: [] });
+    }
+    if (!data[SETTINGS_KEY]) {
+      await chrome.storage.local.set({ [SETTINGS_KEY]: { recording: true } });
+    }
+    await updateBadge(events.length);
+  });
 });
 
 async function updateBadge(count) {
@@ -28,7 +41,7 @@ async function updateBadge(count) {
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.action === 'RECORD_EVENT') {
-    (async () => {
+    enqueueStorageTask(async () => {
       const { [SETTINGS_KEY]: settings = { recording: true }, [STORAGE_KEY]: events = [] } =
         await chrome.storage.local.get([SETTINGS_KEY, STORAGE_KEY]);
 
@@ -48,33 +61,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       // Keep maximum 2000 events to prevent memory overflow
       if (events.length > 2000) {
-        events.shift();
+        events.splice(0, events.length - 2000);
       }
 
       await chrome.storage.local.set({ [STORAGE_KEY]: events });
       await updateBadge(events.length);
       sendResponse({ success: true, count: events.length });
-    })();
+    });
     return true; // async response
   }
 
   if (message.action === 'CLEAR_EVENTS') {
-    (async () => {
+    enqueueStorageTask(async () => {
       await chrome.storage.local.set({ [STORAGE_KEY]: [] });
       await updateBadge(0);
       sendResponse({ success: true });
-    })();
+    });
     return true;
   }
 
   if (message.action === 'TOGGLE_RECORDING') {
-    (async () => {
+    enqueueStorageTask(async () => {
       const { [SETTINGS_KEY]: settings = { recording: true } } =
         await chrome.storage.local.get(SETTINGS_KEY);
       const newRecordingState = !settings.recording;
       await chrome.storage.local.set({ [SETTINGS_KEY]: { ...settings, recording: newRecordingState } });
       sendResponse({ recording: newRecordingState });
-    })();
+    });
     return true;
   }
 });

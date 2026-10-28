@@ -14,6 +14,7 @@ let activeTabName = 'live';
 let isRecording = true;
 let searchTerm = '';
 let selectedEventsSet = new Set();
+let unselectedEventsSet = new Set();
 let initializedEventTypes = false;
 let onlyExplicitEvents = false;
 let onlyGtmEvents = false;
@@ -198,7 +199,7 @@ function updateMultiselectUI() {
     initializedEventTypes = true;
   } else {
     names.forEach((n) => {
-      if (!selectedEventsSet.has(n) && selectedEventsSet.size === names.length - 1) {
+      if (!unselectedEventsSet.has(n)) {
         selectedEventsSet.add(n);
       }
     });
@@ -229,8 +230,10 @@ function updateMultiselectUI() {
     checkbox.addEventListener('change', () => {
       if (checkbox.checked) {
         selectedEventsSet.add(name);
+        unselectedEventsSet.delete(name);
       } else {
         selectedEventsSet.delete(name);
+        unselectedEventsSet.add(name);
       }
       updateTriggerLabel(names.length);
       saveUiPrefs();
@@ -963,6 +966,7 @@ function saveUiPrefs() {
     searchTerm,
     autoScroll: autoScrollCheck ? autoScrollCheck.checked : true,
     selectedEvents: Array.from(selectedEventsSet),
+    unselectedEvents: Array.from(unselectedEventsSet),
     initializedEventTypes,
     auditStatus: auditStatusFilter ? auditStatusFilter.value : 'ALL_GA4',
     auditType: auditTypeFilter ? auditTypeFilter.value : 'ALL',
@@ -1615,6 +1619,7 @@ document.addEventListener('click', (e) => {
 selectAllEventsBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   const stats = getUniqueEventStats();
+  unselectedEventsSet.clear();
   Object.keys(stats).forEach((n) => selectedEventsSet.add(n));
   updateMultiselectUI();
   saveUiPrefs();
@@ -1623,7 +1628,9 @@ selectAllEventsBtn.addEventListener('click', (e) => {
 
 deselectAllEventsBtn.addEventListener('click', (e) => {
   e.stopPropagation();
+  const stats = getUniqueEventStats();
   selectedEventsSet.clear();
+  Object.keys(stats).forEach((n) => unselectedEventsSet.add(n));
   updateMultiselectUI();
   saveUiPrefs();
   renderEvents();
@@ -1635,9 +1642,12 @@ if (selectOnlyGtmEventsBtn) {
     const stats = getUniqueEventStats();
     const gtmRules = (activeGtmSpec && activeGtmSpec.eventRules) || {};
     selectedEventsSet.clear();
+    unselectedEventsSet.clear();
     Object.keys(stats).forEach((n) => {
       if (n in gtmRules) {
         selectedEventsSet.add(n);
+      } else {
+        unselectedEventsSet.add(n);
       }
     });
     updateMultiselectUI();
@@ -1650,9 +1660,12 @@ excludeGtmEventsBtn.addEventListener('click', (e) => {
   e.stopPropagation();
   const stats = getUniqueEventStats();
   selectedEventsSet.clear();
+  unselectedEventsSet.clear();
   Object.keys(stats).forEach((n) => {
     if (!n.startsWith('gtm.')) {
       selectedEventsSet.add(n);
+    } else {
+      unselectedEventsSet.add(n);
     }
   });
   updateMultiselectUI();
@@ -1723,6 +1736,7 @@ clearBtn.addEventListener('click', () => {
     chrome.runtime.sendMessage({ action: 'CLEAR_EVENTS' }, () => {
       liveEvents = [];
       selectedEventsSet.clear();
+      unselectedEventsSet.clear();
       initializedEventTypes = false;
       updateMultiselectUI();
       saveUiPrefs();
@@ -1787,6 +1801,9 @@ async function init() {
         autoScrollCheck.checked = Boolean(savedPrefs.autoScroll);
       }
 
+      if (Array.isArray(savedPrefs.unselectedEvents)) {
+        unselectedEventsSet = new Set(savedPrefs.unselectedEvents);
+      }
       if (Array.isArray(savedPrefs.selectedEvents) && savedPrefs.selectedEvents.length > 0) {
         selectedEventsSet = new Set(savedPrefs.selectedEvents);
         initializedEventTypes = Boolean(savedPrefs.initializedEventTypes);

@@ -1,5 +1,7 @@
 // injected.js - Runs in the page's MAIN execution context
 (function () {
+  if (window.__dla_main_installed) return;
+  window.__dla_main_installed = true;
   const SENDER_ID = 'DATALAYER_AUDITOR';
 
   function safeClone(data) {
@@ -10,14 +12,20 @@
     }
   }
 
+  const emittedItems = new WeakSet();
+
   function emitEvent(payload, origin = 'push') {
     try {
+      if (payload && typeof payload === 'object') {
+        if (emittedItems.has(payload)) return;
+        emittedItems.add(payload);
+      }
       let eventName = 'unnamed_push';
       let hasEventKey = false;
       let explicitEvent = null;
 
       if (payload && typeof payload === 'object' && !Array.isArray(payload)) {
-        if ('event' in payload) {
+        if ('event' in payload && payload.event !== undefined && payload.event !== null) {
           hasEventKey = true;
           explicitEvent = payload.event;
           eventName = String(payload.event);
@@ -45,31 +53,53 @@
           data: safeClone(payload)
         }
       }, '*');
+
+      // Si el evento es un contenedor de cola (como 'encolar_evento' en llamaya.com con 'events_queue'),
+      // sólo desglosamos si no se ha emitido ya el evento directamente.
     } catch (err) {
       console.warn('[DataLayer Auditor] Error emitting event:', err);
     }
   }
 
   function hookDataLayer(dl) {
-    if (!dl || dl.__dla_hooked) return;
+    if (!dl) return;
 
-    // Capture existing items in dataLayer
-    for (let i = 0; i < dl.length; i++) {
+    // Emitir elementos que estuvieran en el dataLayer antes de enganchar y que aún no hayamos emitido
+    const startIdx = typeof dl.__dla_emitted_len === 'number' ? dl.__dla_emitted_len : 0;
+    for (let i = startIdx; i < dl.length; i++) {
       emitEvent(dl[i], 'initial_state');
     }
+    Object.defineProperty(dl, '__dla_emitted_len', {
+      value: dl.length,
+      writable: true,
+      enumerable: false,
+      configurable: true
+    });
 
-    const originalPush = dl.push;
-    dl.push = function (...args) {
-      for (let i = 0; i < args.length; i++) {
-        emitEvent(args[i], 'push');
-      }
-      return originalPush.apply(this, args);
-    };
+    // Si GTM u otro script ha sobrescrito dl.push después de nuestro primer hook, volvemos a envolverlo
+    if (dl.push && !dl.push.__dla_wrapped) {
+      const originalPush = dl.push;
+      const wrappedPush = function (...args) {
+        const res = originalPush.apply(this, args);
+        dl.__dla_emitted_len = dl.length;
+        for (let i = 0; i < args.length; i++) {
+          emitEvent(args[i], 'push');
+        }
+        return res;
+      };
+      Object.defineProperty(wrappedPush, '__dla_wrapped', {
+        value: true,
+        enumerable: false,
+        configurable: false
+      });
+      dl.push = wrappedPush;
+    }
 
     Object.defineProperty(dl, '__dla_hooked', {
       value: true,
+      writable: true,
       enumerable: false,
-      configurable: false
+      configurable: true
     });
   }
 
