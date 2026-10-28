@@ -121,7 +121,7 @@ const DEFAULT_GTM_SPEC = {
         { parameter: "currency", gtmValue: "{{DL_GA4_eventModel.currency}}", dlPath: "eventModel.currency", isComputed: false, optional: false },
         { parameter: "value", gtmValue: "{{DL_GA4_eventModel.value}}", dlPath: "eventModel.value", isComputed: false, optional: false },
         { parameter: "coupon", gtmValue: "{{DL_GA4_eventModel.coupon}}", dlPath: "eventModel.coupon", isComputed: false, optional: true },
-        { parameter: "shipping_tier", gtmValue: "{{DL_GA4_eventModel.shipping_tier}}", dlPath: "eventModel.shipping_tier", isComputed: false, optional: false },
+        { parameter: "shipping_tier", gtmValue: "{{DL_GA4_eventModel.shipping_tier}}", dlPath: "eventModel.shipping_tier", isComputed: false, optional: true },
         { parameter: "items", gtmValue: "{{DL_GA4_eventModel.items}}", dlPath: "eventModel.items", isComputed: false, optional: false },
         { parameter: "items_names", gtmValue: "{{DL_GA4_Items_Names_Concats}}", dlPath: null, isComputed: true, optional: false }
       ],
@@ -167,8 +167,8 @@ const DEFAULT_GTM_SPEC = {
         { parameter: "transaction_id", gtmValue: "{{DL_GA4_eventModel.transaction_id}}", dlPath: "eventModel.transaction_id", isComputed: false, optional: false },
         { parameter: "value", gtmValue: "{{DL_GA4_eventModel.value}}", dlPath: "eventModel.value", isComputed: false, optional: false },
         { parameter: "coupon", gtmValue: "{{DL_GA4_eventModel.coupon}}", dlPath: "eventModel.coupon", isComputed: false, optional: true },
-        { parameter: "shipping", gtmValue: "{{DL_GA4_eventModel.shipping}}", dlPath: "eventModel.shipping", isComputed: false, optional: false },
-        { parameter: "tax", gtmValue: "{{DL_GA4_eventModel.tax}}", dlPath: "eventModel.tax", isComputed: false, optional: false },
+        { parameter: "shipping", gtmValue: "{{DL_GA4_eventModel.shipping}}", dlPath: "eventModel.shipping", isComputed: false, optional: true },
+        { parameter: "tax", gtmValue: "{{DL_GA4_eventModel.tax}}", dlPath: "eventModel.tax", isComputed: false, optional: true },
         { parameter: "items", gtmValue: "{{DL_GA4_eventModel.items}}", dlPath: "eventModel.items", isComputed: false, optional: false },
         { parameter: "items_names", gtmValue: "{{DL_GA4_Items_Names_Concats}}", dlPath: null, isComputed: true, optional: false }
       ],
@@ -279,13 +279,13 @@ const OPTIONAL_PARAMS_BY_EVENT = {
   services: new Set(["items", "items_names"]),
   logout: new Set(["method"]),
   begin_checkout: new Set(["coupon"]),
-  add_shipping_info: new Set(["coupon"]),
+  add_shipping_info: new Set(["coupon", "shipping_tier"]),
   add_payment_info: new Set(["coupon"]),
-  purchase: new Set(["coupon"])
+  purchase: new Set(["coupon", "shipping", "tax"])
 };
 
 function isParamOptionalForEvent(evName, paramName) {
-  if (paramName === "coupon") return true;
+  if (["coupon", "shipping_tier", "shipping", "tax"].includes(paramName)) return true;
   const optSet = OPTIONAL_PARAMS_BY_EVENT[evName];
   return Boolean(optSet && optSet.has(paramName));
 }
