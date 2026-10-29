@@ -397,8 +397,34 @@ body.full-tab-mode .app-container {
   border-radius: 10px;
 }
 
-.search-box input {
+.search-box-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   width: 100%;
+}
+
+.search-mode-select {
+  padding: 6px 8px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s;
+}
+
+.search-mode-select:focus {
+  border-color: var(--accent-orange);
+}
+
+.search-box-row input {
+  flex: 1;
+  min-width: 0;
   padding: 6px 12px;
   background-color: var(--bg-secondary);
   border: 1px solid var(--border-color);
@@ -407,6 +433,10 @@ body.full-tab-mode .app-container {
   font-size: 12px;
   outline: none;
   transition: border-color 0.2s;
+}
+
+.search-box-row input:focus {
+  border-color: var(--accent-orange);
 }
 
 .filter-options {

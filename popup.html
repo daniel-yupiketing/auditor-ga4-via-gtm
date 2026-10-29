@@ -65,8 +65,12 @@
           </div>
         </div>
 
-        <div class="search-box">
-          <input type="text" id="searchInput" placeholder="Buscar texto/valor en payload (ej: Whatsapp, EUR)...">
+        <div class="search-box-row">
+          <select id="searchModeSelect" class="search-mode-select" title="Elegir si el payload debe contener o no contener el texto">
+            <option value="contains">Contiene</option>
+            <option value="not_contains">No contiene</option>
+          </select>
+          <input type="text" id="searchInput" placeholder="Buscar texto o valor en payload (ej: Whatsapp, EUR)...">
         </div>
 
         <div class="filter-row filter-consent-row">

@@ -21,6 +21,7 @@ let onlyGtmEvents = false;
 let onlyPii = false;
 let onlyGa4Errors = false;
 let consentFilter = 'ALL'; // 'ALL', 'PRE', 'POST'
+let searchMode = 'contains'; // 'contains', 'not_contains'
 
 // DOM Elements - Header & Tabs
 const gtmBadgeSubtitle = document.getElementById('gtmBadgeSubtitle');
@@ -39,6 +40,7 @@ const totalCountEl = document.getElementById('totalCount');
 const filteredCountEl = document.getElementById('filteredCount');
 const filterCountWrapper = document.getElementById('filterCountWrapper');
 const sourceIndicator = document.getElementById('sourceIndicator');
+const searchModeSelect = document.getElementById('searchModeSelect');
 const searchInput = document.getElementById('searchInput');
 
 // Multiselect DOM
@@ -325,7 +327,13 @@ function getFilteredEvents() {
       const jsonString = JSON.stringify(ev.data || '').toLowerCase();
       const matchName = eventName.toLowerCase().includes(term);
       const matchJson = jsonString.includes(term);
-      if (!matchName && !matchJson) return false;
+      const matches = matchName || matchJson;
+
+      if (searchMode === 'not_contains') {
+        if (matches) return false;
+      } else {
+        if (!matches) return false;
+      }
     }
 
     return true;
@@ -988,6 +996,7 @@ function saveUiPrefs() {
     onlyPii,
     onlyGa4Errors,
     consentFilter,
+    searchMode,
     searchTerm,
     autoScroll: autoScrollCheck ? autoScrollCheck.checked : true,
     selectedEvents: Array.from(selectedEventsSet),
@@ -1762,6 +1771,14 @@ if (autoScrollCheck) {
   });
 }
 
+if (searchModeSelect) {
+  searchModeSelect.addEventListener('change', (e) => {
+    searchMode = e.target.value;
+    saveUiPrefs();
+    renderEvents();
+  });
+}
+
 searchInput.addEventListener('input', (e) => {
   searchTerm = e.target.value.trim();
   saveUiPrefs();
@@ -1843,6 +1860,7 @@ async function init() {
       onlyPii = Boolean(savedPrefs.onlyPii);
       onlyGa4Errors = Boolean(savedPrefs.onlyGa4Errors);
       consentFilter = savedPrefs.consentFilter || 'ALL';
+      searchMode = savedPrefs.searchMode || 'contains';
       searchTerm = savedPrefs.searchTerm || '';
 
       if (onlyGtmEventsCheck) onlyGtmEventsCheck.checked = onlyGtmEvents;
@@ -1850,6 +1868,7 @@ async function init() {
       if (onlyPiiCheck) onlyPiiCheck.checked = onlyPii;
       if (onlyGa4ErrorsCheck) onlyGa4ErrorsCheck.checked = onlyGa4Errors;
       if (consentFilterSelect) consentFilterSelect.value = consentFilter;
+      if (searchModeSelect) searchModeSelect.value = searchMode;
       if (searchInput) searchInput.value = searchTerm;
       if (autoScrollCheck && savedPrefs.autoScroll !== undefined) {
         autoScrollCheck.checked = Boolean(savedPrefs.autoScroll);
