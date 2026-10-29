@@ -24,6 +24,8 @@
 html, body {
   width: 100%;
   height: 100%;
+  margin: 0;
+  padding: 0;
   background-color: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-family);
@@ -31,31 +33,40 @@ html, body {
   overflow: hidden;
 }
 
-/* Default floating popup sizing */
-@media screen and (max-width: 750px) and (min-width: 600px) {
+/* Default floating popup sizing: fills popup comfortably */
+@media screen and (min-width: 600px) and (max-width: 800px) {
   html, body {
-    width: 680px;
+    width: 100%;
+    min-width: 650px;
     height: 600px;
   }
 }
 
-/* Side panel responsive adaptability */
+/* Side panel and compact widths: adapt smoothly to any width */
 @media screen and (max-width: 599px) {
   html, body {
     width: 100%;
-    min-width: 320px;
+    min-width: 300px;
     height: 100vh;
   }
-  .app-container {
-    width: 100%;
-    height: 100vh;
+  .header {
+    padding: 8px 12px;
   }
-  .filter-row {
-    flex-wrap: wrap;
+  .brand h1 {
+    font-size: 13px;
   }
-  .filter-options {
-    flex-wrap: wrap;
-    gap: 6px;
+  .brand .subtitle {
+    font-size: 10px;
+  }
+  .toolbar {
+    padding: 6px 12px;
+  }
+  .action-buttons {
+    justify-content: flex-start;
+  }
+  .action-buttons .btn {
+    flex: 1 1 auto;
+    justify-content: center;
   }
 }
 
@@ -77,11 +88,13 @@ body.full-tab-mode .app-container {
   border-right: 1px solid var(--border-color);
 }
 
+/* Responsive container filling 100% of available width */
 .app-container {
   display: flex;
   flex-direction: column;
-  width: 680px;
-  height: 600px;
+  width: 100%;
+  height: 100%;
+  min-height: 100%;
   box-sizing: border-box;
 }
 
