@@ -69,6 +69,15 @@
           <input type="text" id="searchInput" placeholder="Buscar texto/valor en payload (ej: Whatsapp, EUR)...">
         </div>
 
+        <div class="filter-row filter-consent-row">
+          <label class="consent-select-label" for="consentFilterSelect">Consentimiento:</label>
+          <select id="consentFilterSelect" class="consent-select" title="Filtrar eventos según se hayan enviado antes o después de aceptar cookies">
+            <option value="ALL">Todos los momentos (Pre y Post)</option>
+            <option value="PRE">🔴 Solo Pre-consentimiento (antes de aceptar)</option>
+            <option value="POST">🟢 Solo Post-consentimiento (tras aceptar cookies)</option>
+          </select>
+        </div>
+
         <div class="filter-options">
           <label class="checkbox-label" title="Mostrar únicamente los eventos definidos en las etiquetas del contenedor GTM">
             <input type="checkbox" id="onlyGtmEventsCheck">

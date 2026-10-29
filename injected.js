@@ -13,6 +13,33 @@
   }
 
   const emittedItems = new WeakSet();
+  let consentGranted = false;
+
+  function checkConsentUpdate(payload) {
+    if (!payload) return;
+    try {
+      // 1. Google Consent Mode v2 vía gtag / dataLayer push [ 'consent', 'update', { analytics_storage: 'granted', ... } ]
+      if (Array.isArray(payload) || (typeof payload === 'object' && payload !== null && ('0' in payload || '1' in payload))) {
+        const p0 = payload[0] || payload['0'];
+        const p1 = payload[1] || payload['1'];
+        const p2 = payload[2] || payload['2'];
+        if (p0 === 'consent' && p1 === 'update' && p2 && typeof p2 === 'object') {
+          if (p2.analytics_storage === 'granted' || p2.ad_storage === 'granted') {
+            consentGranted = true;
+          }
+        }
+      }
+
+      // 2. Eventos OneTrust / Optanon / CMP
+      const ev = payload.event;
+      if (ev === 'OneTrustGroupsUpdated' || ev === 'consent_updated' || ev === 'queue_processed') {
+        const groups = String(payload.OnetrustActiveGroups || payload.OptanonActiveGroups || '');
+        if (groups.includes('C0002') || groups.includes('ANALY') || groups.includes('ADVER') || ev === 'queue_processed' || ev === 'consent_updated') {
+          consentGranted = true;
+        }
+      }
+    } catch (e) {}
+  }
 
   function emitEvent(payload, origin = 'push') {
     try {
@@ -20,6 +47,10 @@
         if (emittedItems.has(payload)) return;
         emittedItems.add(payload);
       }
+
+      // Detectar si este push actualiza el estado de consentimiento
+      checkConsentUpdate(payload);
+
       let eventName = 'unnamed_push';
       let hasEventKey = false;
       let explicitEvent = null;
@@ -48,6 +79,7 @@
           eventName: String(eventName),
           explicitEvent: explicitEvent,
           hasEventKey: hasEventKey,
+          consentState: consentGranted ? 'post_consent' : 'pre_consent',
           url: window.location.href,
           origin: origin,
           data: safeClone(payload)

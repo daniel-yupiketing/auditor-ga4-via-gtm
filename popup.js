@@ -20,6 +20,7 @@ let onlyExplicitEvents = false;
 let onlyGtmEvents = false;
 let onlyPii = false;
 let onlyGa4Errors = false;
+let consentFilter = 'ALL'; // 'ALL', 'PRE', 'POST'
 
 // DOM Elements - Header & Tabs
 const gtmBadgeSubtitle = document.getElementById('gtmBadgeSubtitle');
@@ -56,6 +57,7 @@ const onlyGtmEventsCheck = document.getElementById('onlyGtmEventsCheck');
 const onlyExplicitEventCheck = document.getElementById('onlyExplicitEventCheck');
 const onlyPiiCheck = document.getElementById('onlyPiiCheck');
 const onlyGa4ErrorsCheck = document.getElementById('onlyGa4ErrorsCheck');
+const consentFilterSelect = document.getElementById('consentFilterSelect');
 const importEventsInput = document.getElementById('importEventsInput');
 const importEventsBtn = document.getElementById('importEventsBtn');
 const exportJsonBtn = document.getElementById('exportJsonBtn');
@@ -312,6 +314,12 @@ function getFilteredEvents() {
       }
     }
 
+    if (consentFilter === 'PRE') {
+      if (ev.consentState === 'post_consent') return false;
+    } else if (consentFilter === 'POST') {
+      if (ev.consentState !== 'post_consent') return false;
+    }
+
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
       const jsonString = JSON.stringify(ev.data || '').toLowerCase();
@@ -442,6 +450,10 @@ function renderEvents() {
       ? '<span class="event-badge badge-pii" title="Contiene datos personales como teléfono o email">⚠️ PII</span>'
       : '';
 
+    const consentBadge = ev.consentState === 'post_consent'
+      ? '<span class="event-badge badge-consent-post" title="Evento enviado tras aceptar cookies (post-consentimiento)">🟢 Post-consent</span>'
+      : '<span class="event-badge badge-consent-pre" title="Evento enviado antes de otorgar consentimiento (pre-consentimiento)">🔴 Pre-consent</span>';
+
     const inlineAuditHtml = buildInlineAuditHtml(auditRes);
 
     card.innerHTML = `
@@ -450,6 +462,7 @@ function renderEvents() {
           <span class="chevron">▸</span>
           <span class="event-index">#${index + 1}</span>
           <span class="event-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span>
+          ${consentBadge}
           ${ga4Badge}
           ${originBadge}
           ${piiBadge}
@@ -974,6 +987,7 @@ function saveUiPrefs() {
     onlyExplicitEvents,
     onlyPii,
     onlyGa4Errors,
+    consentFilter,
     searchTerm,
     autoScroll: autoScrollCheck ? autoScrollCheck.checked : true,
     selectedEvents: Array.from(selectedEventsSet),
@@ -1734,6 +1748,14 @@ onlyGa4ErrorsCheck.addEventListener('change', (e) => {
   renderEvents();
 });
 
+if (consentFilterSelect) {
+  consentFilterSelect.addEventListener('change', (e) => {
+    consentFilter = e.target.value;
+    saveUiPrefs();
+    renderEvents();
+  });
+}
+
 if (autoScrollCheck) {
   autoScrollCheck.addEventListener('change', () => {
     saveUiPrefs();
@@ -1820,12 +1842,14 @@ async function init() {
       onlyExplicitEvents = Boolean(savedPrefs.onlyExplicitEvents);
       onlyPii = Boolean(savedPrefs.onlyPii);
       onlyGa4Errors = Boolean(savedPrefs.onlyGa4Errors);
+      consentFilter = savedPrefs.consentFilter || 'ALL';
       searchTerm = savedPrefs.searchTerm || '';
 
       if (onlyGtmEventsCheck) onlyGtmEventsCheck.checked = onlyGtmEvents;
       if (onlyExplicitEventCheck) onlyExplicitEventCheck.checked = onlyExplicitEvents;
       if (onlyPiiCheck) onlyPiiCheck.checked = onlyPii;
       if (onlyGa4ErrorsCheck) onlyGa4ErrorsCheck.checked = onlyGa4Errors;
+      if (consentFilterSelect) consentFilterSelect.value = consentFilter;
       if (searchInput) searchInput.value = searchTerm;
       if (autoScrollCheck && savedPrefs.autoScroll !== undefined) {
         autoScrollCheck.checked = Boolean(savedPrefs.autoScroll);

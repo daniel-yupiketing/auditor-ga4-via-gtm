@@ -634,10 +634,47 @@ body.full-tab-mode .app-container {
   border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
-.badge-ga4-err {
-  background-color: rgba(239, 68, 68, 0.25);
+.filter-consent-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.consent-select-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.consent-select {
+  flex: 1;
+  padding: 5px 8px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: 5px;
+  color: #fff;
+  font-size: 11px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.consent-select:focus {
+  border-color: var(--accent-orange);
+}
+
+.badge-consent-pre {
+  background-color: rgba(239, 68, 68, 0.15);
   color: #fca5a5;
-  border: 1px solid rgba(239, 68, 68, 0.5);
+  border: 1px solid rgba(239, 68, 68, 0.35);
+}
+
+.badge-consent-post {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.35);
 }
 
 .badge-init {
