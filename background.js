@@ -29,9 +29,9 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Configure side panel behavior if supported
+// Configure side panel behavior: open side panel directly when clicking the extension icon
 if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
-  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => {});
 }
 
 async function updateBadge(count) {
