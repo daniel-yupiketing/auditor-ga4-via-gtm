@@ -10,8 +10,12 @@
   },
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "sidePanel"
   ],
+  "side_panel": {
+    "default_path": "popup.html"
+  },
   "action": {
     "default_popup": "popup.html",
     "default_title": "Auditor de dataLayer y analizador de GA4",

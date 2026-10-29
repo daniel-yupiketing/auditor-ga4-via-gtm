@@ -29,6 +29,11 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// Configure side panel behavior if supported
+if (chrome.sidePanel && chrome.sidePanel.setPanelBehavior) {
+  chrome.sidePanel.setPanelBehavior({ openPanelOnActionClick: false }).catch(() => {});
+}
+
 async function updateBadge(count) {
   try {
     const text = count > 0 ? (count > 999 ? '999+' : String(count)) : '';

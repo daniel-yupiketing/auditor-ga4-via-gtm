@@ -23,6 +23,7 @@ let onlyGa4Errors = false;
 
 // DOM Elements - Header & Tabs
 const gtmBadgeSubtitle = document.getElementById('gtmBadgeSubtitle');
+const openSidePanelBtn = document.getElementById('openSidePanelBtn');
 const openAnalyzerTabBtn = document.getElementById('openAnalyzerTabBtn');
 const tabLiveBtn = document.getElementById('tabLiveBtn');
 const tabAuditBtn = document.getElementById('tabAuditBtn');
@@ -83,10 +84,20 @@ const exportAuditReportBtn = document.getElementById('exportAuditReportBtn');
 const exportAuditCsvBtn = document.getElementById('exportAuditCsvBtn');
 const auditContentContainer = document.getElementById('auditContentContainer');
 
-// Check if opened in a full browser tab
+// Check if opened in side panel mode or full browser tab
+const isSidePanel = window.location.pathname.includes('sidepanel') || window.innerWidth < 450;
 if (window.location.search.includes('fulltab=1')) {
   document.body.classList.add('full-tab-mode');
   if (openAnalyzerTabBtn) openAnalyzerTabBtn.classList.add('hidden');
+}
+if (chrome.sidePanel && openSidePanelBtn) {
+  // Hide side panel button if already inside a side panel
+  chrome.tabs.getCurrent((tab) => {
+    if (!tab) {
+      // Typically inside side panel context
+      openSidePanelBtn.classList.add('hidden');
+    }
+  });
 }
 
 // Pattern to alert on potential PII (emails, phone numbers with prefix, Spanish DNI/NIE)
@@ -995,6 +1006,25 @@ function switchTab(tabName) {
 // Event Listeners - Navigation & Full Tab
 tabLiveBtn.addEventListener('click', () => switchTab('live'));
 tabAuditBtn.addEventListener('click', () => switchTab('audit'));
+
+if (openSidePanelBtn) {
+  openSidePanelBtn.addEventListener('click', async () => {
+    try {
+      if (chrome.sidePanel && chrome.sidePanel.open) {
+        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        if (tab && tab.id) {
+          await chrome.sidePanel.open({ tabId: tab.id });
+          window.close(); // Close the floating popup once the side panel is opened
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn('Could not open side panel programmatically, opening in tab as fallback:', err);
+    }
+    // Fallback if browser version doesn't support programmatic open
+    chrome.tabs.create({ url: chrome.runtime.getURL('popup.html?fulltab=1') });
+  });
+}
 
 if (openAnalyzerTabBtn) {
   openAnalyzerTabBtn.addEventListener('click', () => {
