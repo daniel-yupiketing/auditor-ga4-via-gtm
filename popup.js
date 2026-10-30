@@ -89,11 +89,28 @@ const exportAuditCsvBtn = document.getElementById('exportAuditCsvBtn');
 const auditContentContainer = document.getElementById('auditContentContainer');
 
 // Check if opened in side panel mode or full browser tab
-const isSidePanel = window.location.pathname.includes('sidepanel') || window.innerWidth < 450;
-if (window.location.search.includes('fulltab=1')) {
-  document.body.classList.add('full-tab-mode');
-  if (openAnalyzerTabBtn) openAnalyzerTabBtn.classList.add('hidden');
+function checkLayoutMode() {
+  const isFullTab = window.location.search.includes('fulltab=1');
+  if (isFullTab) {
+    document.documentElement.classList.add('full-tab-mode');
+    document.body.classList.add('full-tab-mode');
+    if (openAnalyzerTabBtn) openAnalyzerTabBtn.classList.add('hidden');
+    return;
+  }
+
+  // Detect side panel: either URL parameter, or narrow window width (< 600px)
+  const isSidePanel = window.location.search.includes('sidepanel=1') || window.innerWidth < 600;
+  if (isSidePanel) {
+    document.documentElement.classList.add('sidepanel-mode');
+    document.body.classList.add('sidepanel-mode');
+  } else {
+    document.documentElement.classList.remove('sidepanel-mode');
+    document.body.classList.remove('sidepanel-mode');
+  }
 }
+checkLayoutMode();
+window.addEventListener('resize', checkLayoutMode);
+
 if (chrome.sidePanel && openSidePanelBtn) {
   // Hide side panel button if already inside a side panel
   chrome.tabs.getCurrent((tab) => {

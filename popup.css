@@ -22,8 +22,10 @@
 }
 
 html, body {
-  width: 100%;
-  height: 100%;
+  width: 680px;
+  height: 600px;
+  min-width: 680px;
+  min-height: 600px;
   margin: 0;
   padding: 0;
   background-color: var(--bg-primary);
@@ -33,48 +35,42 @@ html, body {
   overflow: hidden;
 }
 
-/* Default floating popup sizing: fills popup comfortably */
-@media screen and (min-width: 600px) and (max-width: 800px) {
-  html, body {
-    width: 100%;
-    min-width: 650px;
-    height: 600px;
-  }
+/* Side panel and compact widths: adapt smoothly when opened in side panel (width < 600px) */
+body.sidepanel-mode,
+html.sidepanel-mode {
+  width: 100% !important;
+  min-width: 300px !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
 }
 
-/* Side panel and compact widths: adapt smoothly to any width */
-@media screen and (max-width: 599px) {
-  html, body {
-    width: 100%;
-    min-width: 300px;
-    height: 100vh;
-  }
-  .header {
-    padding: 8px 12px;
-  }
-  .brand h1 {
-    font-size: 13px;
-  }
-  .brand .subtitle {
-    font-size: 10px;
-  }
-  .toolbar {
-    padding: 6px 12px;
-  }
-  .action-buttons {
-    justify-content: flex-start;
-  }
-  .action-buttons .btn {
-    flex: 1 1 auto;
-    justify-content: center;
-  }
+body.sidepanel-mode .header {
+  padding: 8px 12px;
+}
+body.sidepanel-mode .brand h1 {
+  font-size: 13px;
+}
+body.sidepanel-mode .brand .subtitle {
+  font-size: 10px;
+}
+body.sidepanel-mode .toolbar {
+  padding: 6px 12px;
+}
+body.sidepanel-mode .action-buttons {
+  justify-content: flex-start;
+}
+body.sidepanel-mode .action-buttons .btn {
+  flex: 1 1 auto;
+  justify-content: center;
 }
 
 /* Full tab mode when opened in a browser tab */
 body.full-tab-mode,
+html.full-tab-mode,
 html:has(body.full-tab-mode) {
-  width: 100%;
-  height: 100vh;
+  width: 100% !important;
+  min-width: 100% !important;
+  height: 100vh !important;
   max-width: none;
   max-height: none;
 }
@@ -88,7 +84,7 @@ body.full-tab-mode .app-container {
   border-right: 1px solid var(--border-color);
 }
 
-/* Responsive container filling 100% of available width */
+/* Responsive container */
 .app-container {
   display: flex;
   flex-direction: column;
